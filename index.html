@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Calidad de Agua</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Estilos globales */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(to bottom, #e0f7fa, #006064);
+            margin: 0;
+            padding: 0;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin: 20px 0;
+            color: #ffffff;
+            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .gauge {
+            background: #ffffff;
+            /* Eliminar el border-radius para hacerlo cuadrado */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            width: 300px;  /* Aumentar el tamaño */
+            height: 300px; /* Aumentar el tamaño */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;  /* Ajusta el tamaño de la fuente si es necesario */
+            font-weight: bold;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 40px;  /* Agrega espacio abajo de las gráficas */
+        }
+
+        .gauge:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #qualityMessage {
+            margin-top: 50px;  /* Espacio adicional antes del cuadro de calidad */
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            max-width: 600px;
+            text-align: center;
+            margin: 0 auto;  /* Centra el contenedor horizontalmente */
+            transition: all 0.5s ease-in-out;
+        }
+
+        #qualityMessage:hover {
+            transform: translateY(-2px);  /* Movimiento más sutil hacia arriba */
+            cursor: pointer;  /* Muestra un cursor de mano al pasar */
+        }
+
+        .good {
+            background-color: #4caf50;
+            color: #fff;
+        }
+
+        .regular {
+            background-color: #ffeb3b;
+            color: #333;
+        }
+
+        .bad {
+            background-color: #f44336;
+            color: #fff;
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 15px;
+            text-align: center;
+            background: #004d40;
+            color: #ffffff;
+            width: 100%;
+            box-shadow: 0 -3px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Estilos del modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            position: relative;
+        }
+
+        .modal-content h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .modal-content p {
+            font-size: 1rem;
+            margin: 10px 0;
+        }
+
+        .project-details {
+        background-color: #f4f4f4;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        margin: 5px auto;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        }
+
+        .project-details p {
+            margin: 10px 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .project-details .name {
+            font-weight: bold;
+            font-size: 18px;
+            color: #007bff;
+        }
+
+        .project-details .project {
+            font-size: 18px;
+            color: #28a745;
+            font-style: italic;
+        }
+
+        .project-details .advisor {
+            font-size: 16px;
+            color: #6c757d;
+        }
+
+        .project-details .final-project {
+            font-size: 18px;
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+
+
+        /* Estilo del botón de cierre */
+    .close-btn {
+        background-color: #f44336;  /* Color de fondo rojo */
+        color: #ffffff;  /* Color del texto blanco */
+        border: none;  /* Sin borde */
+        border-radius: 5px;  /* Bordes redondeados */
+        padding: 10px 15px;  /* Relleno interno */
+        font-size: 1rem;  /* Tamaño de fuente */
+        font-weight: bold;  /* Negrita */
+        cursor: pointer;  /* Cambia el cursor al pasar por encima */
+        transition: background-color 0.3s ease, transform 0.2s ease;  /* Transición suave */
+    }
+
+    /* Efecto al pasar el cursor */
+    .close-btn:hover {
+        background-color: #d32f2f;  /* Color de fondo más oscuro */
+        transform: scale(1.1);  /* Aumenta ligeramente el tamaño del botón */
+    }
+
+    /* Efecto al presionar el botón */
+    .close-btn:active {
+        background-color: #c62828;  /* Color de fondo cuando se presiona */
+        transform: scale(1);  /* Restablece el tamaño */
+    }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="raphael-2.1.4.min.js"></script>
+    <script src="justgage.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Monitor de Calidad de Agua</h1>
+    </header>
+    <main>
+        <section class="container">
+            <div id="gaugePH" class="gauge" onclick="showModal('ph')"></div>
+            <div id="gaugeTDS" class="gauge" onclick="showModal('tds')"></div>
+            <div id="gaugeTemperature" class="gauge" onclick="showModal('temperature')"></div>
+        </section>
+        <div id="qualityMessage" class="loading">Esperando datos...</div>
+    </main>
+
+    <section id="historicalSection" style="width: 100%; margin-top: 40px;">
+        <canvas id="historicalChart" width="400" height="200"></canvas>
+    </section>
+
+
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Información</h2>
+            <p id="modalText">Aquí irá la información.</p>
+            <button class="close" onclick="closeModal()">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Información del equipo y proyecto -->
+    <div id="projectDetails" class="project-details">
+        <p class="name">Roberto Carlos Gamboa</p>
+        <p class="name">Valentin Moreno Molcado</p>
+        <p class="project">Internet de las cosas</p>
+        <p class="advisor">Ing. Ana Karen Melendez Olivares</p>
+        <p class="final-project">Proyecto final</p>
+    </div>
+
+    <footer>
+        <p>Desarrollado por Equipo 1</p>
+    </footer>
+
+    <script>
+        // Variables para la API
+        const accessToken = '25586e01d69fb30ad6414da76654970558069b22';
+        const deviceId = 'e00fce680fc0e5b73b2899b8';
+
+        // Inicialización de medidores
+        const gaugePH = new JustGage({
+            id: "gaugePH",
+            value: 0,
+            min: 0.0,
+            max: 50,
+            title: "Temperatura (°C) 🌡️",
+            decimals: 2,
+            gaugeWidthScale: 0.8,
+            levelColors: ["#f44336", "#ffeb3b", "#4caf50"]
+        });
+
+        const gaugeTDS = new JustGage({
+            id: "gaugeTDS",
+            value: 0,
+            min: 0,
+            max: 15,
+            title: "pH ⚗️",
+            decimals: 0,
+            gaugeWidthScale: 0.8,
+            levelColors: ["#4caf50", "#ff9800", "#f44336"]
+        });
+
+        const gaugeTemperature = new JustGage({
+            id: "gaugeTemperature",
+            value: 0,
+            min: 0,
+            max: 2000,
+            title: "TDS (ppm) 💧",
+            decimals: 1,
+            gaugeWidthScale: 0.8,
+            levelColors: ["#2196f3", "#ffeb3b", "#f44336"]
+        });
+
+        // Función para obtener datos
+        function getData() {
+            axios.get(`https://api.particle.io/v1/devices/${deviceId}/temperature?access_token=${accessToken}`)
+                .then(response => gaugeTemperature.refresh(response.data.result))
+                .catch(console.error);
+
+            axios.get(`https://api.particle.io/v1/devices/${deviceId}/phValue?access_token=${accessToken}`)
+                .then(response => gaugePH.refresh(response.data.result))
+                .catch(console.error);
+                updateQualityMessage(); // Actualiza calidad tras obtener pH
+
+            axios.get(`https://api.particle.io/v1/devices/${deviceId}/tdsValue?access_token=${accessToken}`)
+                .then(response => gaugeTDS.refresh(response.data.result))
+                .catch(console.error);
+                updateQualityMessage(); // Actualiza calidad tras obtener pH
+        }
+
+        // Función para actualizar el mensaje de calidad del agua
+        function updateQualityMessage() {
+            const pH = gaugeTDS.config.value;
+            const tdsValue = gaugeTemperature.config.value;
+
+            const qualityMessage = document.getElementById('qualityMessage');
+
+            if ((tdsValue < 300) && (pH >= 6.5 && pH <= 8.5)) {
+                qualityMessage.textContent = "Estado: Bueno. El agua está en óptimas condiciones✅.";
+                qualityMessage.className = "good";
+            } else if ((tdsValue >= 300 && tdsValue <= 600) && (pH >= 5.5 && pH < 6.5)) {
+                qualityMessage.textContent = "Estado: Regular. El agua tiene condiciones aceptables, pero necesita atención⚠️.";
+                qualityMessage.className = "regular";
+            } else if (tdsValue > 600 && tdsValue <= 1000 && (pH >= 6.0 && pH <= 8.0)) {
+                qualityMessage.textContent = "Estado: Regular. El agua podría ser aceptable con monitoreo⚠️.";
+                qualityMessage.className = "regular";
+            } else if (tdsValue > 1000 && tdsValue <= 1500 && (pH >= 6.0 && pH <= 8.0)) {
+                qualityMessage.textContent = "Estado: Regular. El agua requiere atención seria⚠️.";
+                qualityMessage.className = "regular";
+            } else {
+                qualityMessage.textContent = "Estado: Malo. El agua no es apta para consumo⚠️.";
+                qualityMessage.className = "bad";
+            }
+        }
+	
+
+        // Actualización de datos cada 3 segundos
+        setInterval(getData,3000);
+
+        // Funciones para mostrar y cerrar el modal
+        function showModal(type) {
+            const modal = document.getElementById('infoModal');
+        const title = document.getElementById('modalTitle');
+        const text = document.getElementById('modalText');
+
+    if (type === 'ph') {
+        title.textContent = '¿Por qué es importante la temperatura?';
+        text.innerHTML = `
+            <p>La temperatura del agua afecta la solubilidad de gases y la vida acuática:</p>
+            <ul>
+                <li><strong>Baja (< 10°C):</strong> Puede ralentizar procesos biológicos y afectar ecosistemas.</li>
+                <li><strong>Moderada (10 - 25°C):</strong> Ideal para la mayoría de los organismos y el consumo humano.</li>
+                <li><strong>Alta (> 25°C):</strong> Reduce la solubilidad del oxígeno, lo que puede ser peligroso para la vida acuática.</li>
+            </ul>
+        `;
+    } else if (type === 'tds') {
+        title.textContent = '¿Qué es el pH?';
+        text.innerHTML = `
+            <p>El pH mide la acidez o alcalinidad del agua. Su rango va de 0 a 14:</p>
+            <ul>
+                <li><strong>Bajo (pH < 5.5):</strong> Indica agua ácida, que puede corroer tuberías y ser dañina para organismos acuáticos.</li>
+                <li><strong>Neutro (pH 6.5 - 8.5):</strong> Ideal para el consumo humano y compatible con la mayoría de los ecosistemas acuáticos.</li>
+                <li><strong>Alto (pH > 9.0):</strong> Indica agua alcalina, lo que puede causar incrustaciones en tuberías y afectar el sabor.</li>
+            </ul>
+        `;
+    } else if (type === 'temperature') {
+        title.textContent = '¿Qué son los TDS?';
+        text.innerHTML = `
+            <p>Los Sólidos Totales Disueltos (TDS) son partículas disueltas en el agua. Los umbrales típicos son:</p>
+            <ul>
+                <li><strong>Bajo (TDS < 300 ppm):</strong> Agua pura, pero puede carecer de minerales esenciales.</li>
+                <li><strong>Moderado (TDS 300 - 600 ppm):</strong> Considerado potable con buen sabor.</li>
+                <li><strong>Alto (TDS > 600 ppm):</strong> Puede indicar contaminación o acumulación de minerales no deseados.</li>
+            </ul>
+        `;
+    }
+
+    modal.style.display = 'flex';
+}
+
+        function closeModal() {
+            const modal = document.getElementById('infoModal');
+            modal.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
